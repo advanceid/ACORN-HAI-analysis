@@ -130,7 +130,7 @@ df_all <- df_plot %>%
     lcl_p   = lcl,
     ucl_p   = ucl,
     x_cap   = dplyr::case_when(
-      analysis == analysis_map$analysis_label[3] ~ 8, 
+      analysis == analysis_map$analysis_label[3] ~ 4, 
       TRUE ~ 20
     )
   )
@@ -143,8 +143,8 @@ df_income <- df_income %>%
   mutate(
     need_break = ucl_p > x_cap,
     xmin_plot  = pmax(lcl_p, 0),
-    xmax_plot  = pmin(ucl_p, x_cap),
-    x_point    = pmin(est_p, x_cap)
+    xmax_plot  = pmin(ucl_p, x_cap),  
+    x_point    = pmin(est_p, x_cap) 
   )
 
 df_over <- df_over %>%
@@ -167,19 +167,22 @@ df_limits <- tidyr::expand_grid(
   mutate(
     x = dplyr::case_when(
       which == "min" ~ 0,
-      which == "max" & analysis == analysis_map$analysis_label[3] ~ 8,
+      which == "max" & analysis == analysis_map$analysis_label[3] ~ 4,
       which == "max" ~ 20
     )
   )
 
 # Plot
 p <- ggplot() +
-  geom_segment(
-    data = df_income,
-    aes(x = xmin_plot, xend = xmax_plot, y = y_num, yend = y_num),
-    linewidth = 0.25, colour = "black"
-  ) +
-  # Left caps (always drawn)
+# -------------------------
+# Income groups (non-Overall)
+# -------------------------
+geom_segment(
+  data = df_income,
+  aes(x = xmin_plot, xend = xmax_plot, y = y_num, yend = y_num),
+  linewidth = 0.25, colour = "black"
+) +
+  # Left caps
   geom_segment(
     data = df_income,
     aes(x = xmin_plot, xend = xmin_plot,
@@ -193,9 +196,9 @@ p <- ggplot() +
         y = y_num - cap_half, yend = y_num + cap_half),
     linewidth = 0.25, colour = "black"
   ) +
-  # Truncated CIs: show // instead of a right cap
   geom_text(
-    data = df_income %>% filter(need_break),
+    data = df_income %>% 
+      filter(need_break, analysis != analysis_map$analysis_label[3]),
     aes(x = xmax_plot - 0.15, y = y_num),
     label  = "//",
     family = base_family,
@@ -205,15 +208,24 @@ p <- ggplot() +
     vjust  = 0.4,
     colour = "black"
   ) +
-  # Point estimates: black circles
+  geom_point(
+    data = df_income %>%
+      filter(need_break, analysis == analysis_map$analysis_label[3]),
+    aes(x = xmax_plot+0.05, y = y_num),
+    shape = 2,    
+    size  = 1.5,
+    stroke = 0.5,
+    colour = "black"
+  ) +
   geom_point(
     data = df_income,
     aes(x = x_point, y = y_num),
     shape = 19, size = 0.8, colour = "black"
   ) +
   
-  # ---- Overall group ----
-# Horizontal lines
+# -------------------------
+# Overall group
+# -------------------------
 geom_segment(
   data = df_over,
   aes(x = xmin_plot, xend = xmax_plot, y = y_num, yend = y_num),
@@ -233,9 +245,9 @@ geom_segment(
         y = y_num - cap_half, yend = y_num + cap_half),
     linewidth = 0.25, colour = "black"
   ) +
-  # Truncated Overall CIs: //
   geom_text(
-    data = df_over %>% filter(need_break),
+    data = df_over %>% 
+      filter(need_break, analysis != analysis_map$analysis_label[3]),
     aes(x = xmax_plot - 0.15, y = y_num),
     label  = "//",
     family = base_family,
@@ -245,16 +257,27 @@ geom_segment(
     vjust  = 0.4,
     colour = "black"
   ) +
-  # Overall point estimates: black diamonds
+  geom_point(
+    data = df_over %>% 
+      filter(need_break, analysis == analysis_map$analysis_label[3]),
+    aes(x = xmax_plot+0.05, y = y_num),
+    shape = 2,
+    size  = 1.5,
+    stroke = 0.5,
+    colour = "black"
+  ) +
   geom_point(
     data = df_over,
     aes(x = x_point, y = y_num),
     shape = 18, size = 2, colour = "black"
   ) +
+  
+  # Dummy points to enforce x-range per facet
   geom_blank(
     data = df_limits,
     aes(x = x, y = y_num)
   ) +
+  # y-axis: numeric -> income labels
   scale_y_continuous(
     name   = NULL,
     breaks = seq_along(lvl_y),
@@ -278,6 +301,7 @@ geom_segment(
   ) +
   facet_grid2(vars(category), vars(analysis), scales = "free_x", independent = "x") 
 
+p
 
 # Save PDF
 Cairo::CairoPDF(

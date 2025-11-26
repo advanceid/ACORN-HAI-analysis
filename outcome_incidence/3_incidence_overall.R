@@ -174,7 +174,7 @@ df_limits <- tidyr::expand_grid(
 
 # Plot
 p <- ggplot() +
-# -------------------------
+  # -------------------------
 # Income groups (non-Overall)
 # -------------------------
 geom_segment(
@@ -208,13 +208,16 @@ geom_segment(
     vjust  = 0.4,
     colour = "black"
   ) +
-  geom_point(
+  geom_text(
     data = df_income %>%
       filter(need_break, analysis == analysis_map$analysis_label[3]),
-    aes(x = xmax_plot+0.05, y = y_num),
-    shape = 2,    
-    size  = 1.5,
-    stroke = 0.5,
+    aes(x = xmax_plot-0.05, y = y_num),
+    label  = "//",
+    family = base_family,
+    fontface = "bold",
+    size   = 2.6,
+    hjust  = 0,
+    vjust  = 0.4,
     colour = "black"
   ) +
   geom_point(
@@ -223,7 +226,7 @@ geom_segment(
     shape = 19, size = 0.8, colour = "black"
   ) +
   
-# -------------------------
+  # -------------------------
 # Overall group
 # -------------------------
 geom_segment(
@@ -257,13 +260,16 @@ geom_segment(
     vjust  = 0.4,
     colour = "black"
   ) +
-  geom_point(
+  geom_text(
     data = df_over %>% 
       filter(need_break, analysis == analysis_map$analysis_label[3]),
-    aes(x = xmax_plot+0.05, y = y_num),
-    shape = 2,
-    size  = 1.5,
-    stroke = 0.5,
+    aes(x = xmax_plot-0.05, y = y_num),
+    label  = "//",
+    family = base_family,
+    fontface = "bold",
+    size   = 2.6,
+    hjust  = 0,
+    vjust  = 0.4,
     colour = "black"
   ) +
   geom_point(
